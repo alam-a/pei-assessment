@@ -11,4 +11,5 @@ To run the tests, use this
 ```bash
 python -m pytest
 python -m pytest -vv # for verbose test output
+python -m pytest --cov=assessment --cov-report=html # for coverage report
 ```

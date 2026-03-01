@@ -7,7 +7,7 @@ from assessment.io.reader import read_json, read_excel, read_csv
 @pytest.fixture
 def sample_json_path(tmp_path, sample_data):
     file = tmp_path / "orders.json"
-    pd.DataFrame(sample_data).to_json(file)
+    pd.DataFrame(sample_data).to_json(file, orient='records')
     # file.write_text("""
     #                 [{"first_name": "Salman", "second_name": "Khan", "age": 55}]
     #                 """)
@@ -35,6 +35,7 @@ def sample_csv_path(tmp_path, sample_data):
 
 def test_read_json(spark: SparkSession, sample_json_path):
     df = read_json(spark, sample_json_path)
+    df.show()
 
     assert df.count() == 1
     assert "first_name" in df.columns

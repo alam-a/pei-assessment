@@ -10,6 +10,7 @@ dependencies = [
     "pyarrow",
     "openpyxl",
     "pytest",
+    "pytest-cov",
     "ipytest",
     "ipykernel",
     "pip",
