@@ -8,20 +8,20 @@ from ..transform.utils import flatten_json_df
 
 
 def load(spark: SparkSession, base_path: str):
-    csv_path = f"{base_path}/Products.csv"
-    excel_path = f"{base_path}/Customer.xlsx"
-    json_path = f"{base_path}/Orders.csv"
+    products_path = f"{base_path}/Products.csv"
+    customers_path = f"{base_path}/Customer.xlsx"
+    orders_path = f"{base_path}/Orders.json"
 
-    csv_df = normalize_column_names(read_csv(spark, csv_path))
-    csv_df = strip_whitespace(csv_df)
-    excel_df = normalize_column_names(read_excel(spark, excel_path))
-    excel_df = strip_whitespace(excel_df)
-    json_df = normalize_column_names(flatten_json_df(read_json(spark, json_path)))
-    json_df = strip_whitespace(json_df)
+    products_df = normalize_column_names(read_csv(spark, products_path))
+    products_df = strip_whitespace(products_df)
+    customers_df = normalize_column_names(read_excel(spark, customers_path))
+    customers_df = strip_whitespace(customers_df)
+    orders_df = normalize_column_names(flatten_json_df(read_json(spark, orders_path)))
+    orders_df = strip_whitespace(orders_df)
 
-    csv_df.write.parquet(f"{base_path}/outputs/csv.parquet")
-    json_df.write.parquet(f"{base_path}/outputs/json.parquet")
-    excel_df.write.parquet(f"{base_path}/outputs/excel.parquet")
+    products_df.write.mode("overwrite").parquet(f"{base_path}/outputs/products.parquet")
+    orders_df.write.mode("overwrite").parquet(f"{base_path}/outputs/orders.parquet")
+    customers_df.write.mode("overwrite").parquet(f"{base_path}/outputs/customers.parquet")
 
 def strip_whitespace(df: DataFrame) -> DataFrame:
     from pyspark.sql.functions import col, trim

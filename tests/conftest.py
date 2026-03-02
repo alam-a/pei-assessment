@@ -64,5 +64,6 @@ def sample_customers_data():
         }
     ]
 
+@pytest.fixture(scope="session")
 def test_spark_session_fixture(spark):
     assert spark.range(100).count == 100

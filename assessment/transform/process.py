@@ -35,3 +35,8 @@ def process(spark: SparkSession, base_path: str) -> DataFrame:
         .withColumn("phone", clean_phone_numbers(col("phone")))
     logger.info(f"Saving customers df after deduplication and cleanup")
     customers_df.write.mode("overwrite").parquet(f"{base_path}/customers_transformed.parquet")
+    
+    # Create enriched tables
+    from assessment.transform.utils import create_enriched_customers_products_table, create_enriched_orders_table
+    create_enriched_customers_products_table(spark, base_path)
+    create_enriched_orders_table(spark, base_path)

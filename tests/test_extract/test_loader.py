@@ -4,11 +4,11 @@ import pandas as pd
 import os
 from pathlib import Path
 from assessment.io.reader import read_csv
-from assessment.extract.load_data_sources import normalize_column_names, load
+from assessment.extract.load_data_sources import normalize_column_names, load, flatten_json_df
 
 CSV_FILE_NAME = 'Products.csv'
 EXCEL_FILE_NAME = 'Customer.xlsx'
-JSON_FILE_NAME = 'Orders.csv'
+JSON_FILE_NAME = 'Orders.json'
 
 @pytest.fixture
 def sample_csv_path(tmp_path, sample_uncleaned_headers):
@@ -43,13 +43,12 @@ def base_path(sample_data, tmp_path):
 
 def test_load(spark: SparkSession, base_path):
     print(os.listdir(base_path))
-    assert not os.path.exists(base_path / 'outputs' / 'csv.parquet')
-    assert not os.path.exists(base_path / 'outputs' / 'excel.parquet')
-    assert not os.path.exists(base_path / 'outputs' / 'json.parquet')
+    assert not os.path.exists(base_path / 'outputs' / 'orders.parquet')
+    assert not os.path.exists(base_path / 'outputs' / 'products.parquet')
+    assert not os.path.exists(base_path / 'outputs' / 'customers.parquet')
     
     load(spark, base_path)
     
-    assert os.path.exists(base_path / 'outputs' / 'csv.parquet')
-    assert os.path.exists(base_path / 'outputs' / 'excel.parquet')
-    assert os.path.exists(base_path / 'outputs' / 'json.parquet')
-
+    assert os.path.exists(base_path / 'outputs' / 'products.parquet')
+    assert os.path.exists(base_path / 'outputs' / 'customers.parquet')
+    assert os.path.exists(base_path / 'outputs' / 'orders.parquet')

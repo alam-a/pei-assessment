@@ -1,6 +1,7 @@
 from pyspark.sql.session import SparkSession
 from pyspark.sql.column import Column
 from pyspark.sql.functions import regexp_replace, col, to_date, monotonically_increasing_id, row_number, initcap
+import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
 from pyspark.sql.window import Window
 from typing import List, Optional, Dict, Any
@@ -29,11 +30,11 @@ def deduplicate_using_aggregation(df: DataFrame, primary_keys: List[str], aggreg
     Remove duplicate rows using aggregation. Maybe useful for things like price, where we may want average price
     """
     if not primary_keys:
-        logger.warning("Primary keys list is empty, falling back to simple deduplication")
-        return deduplicate_rows(df, primary_keys)
+        raise ValueError("Primary keys list cannot be empty")
     
     if aggregation_rules is None:
-        aggregation_rules = {}
+        logger.warning("Aggregation rules is None, falling back to simple deduplication")
+        return deduplicate_rows(df, primary_keys)
     
     from pyspark.sql.functions import first, last, max, min, sum, avg, count
     aggregation_function_mapping = {
@@ -64,22 +65,13 @@ def convert_date_str_to_date(date_column: Column, input_format: str = "dd/MM/yyy
     """
     Convert date string to date.
     """
-    # return to_date(date_column, input_format).cast("string").alias(date_column._jc.toString())
     return to_date(date_column, input_format)
 
 def convert_name_to_alphabetic_with_name_case(name_column: Column) -> Column:
-    """
-    Remove non-alphabetic characters from name and convert to proper case.
-    """
     # Remove non-alphabetic characters (keep only letters and spaces)
     cleaned = regexp_replace(name_column, r"[^a-zA-Z\s]", "")
+    return initcap(cleaned)
     
-    # Convert to proper case (first letter uppercase, rest lowercase)
-    # Note: Spark doesn't have a built-in proper case function, so we'll use initcap
-    proper_case = initcap(cleaned)
-    
-    return proper_case
-
 def flatten_json_df(df: DataFrame) -> DataFrame:
     # Recursively flatten a nested dataframe, such as one loaded from JSON
     # We could limit the levels of recursion if needed, but I have not implemented that yet
@@ -99,9 +91,71 @@ def flatten_json_df(df: DataFrame) -> DataFrame:
                 change_needed = True
     return df
 
-# def clean_json(spark: SparkSession, json_path: str) -> DataFrame:
-#     # Flatten the JSON
-#     json_df = spark.read.json(json_path)
-#     json_df = flatten_json_df(json_df)
+
+def create_enriched_customers_products_table(spark, base_path):
+    # Load transformed data
+    customers_df: DataFrame = spark.read.parquet(f"{base_path}/customers_transformed.parquet")
+    products_df: DataFrame = spark.read.parquet(f"{base_path}/products_transformed.parquet")
     
-#     return json_df
+    # Create enriched customers table
+    enriched_customers = customers_df.select(
+        "customer_id", 
+        "customer_name", 
+        "country",
+        "phone"
+    )
+    
+    # Create enriched products table  
+    enriched_products = products_df.select(
+        "product_id",
+        "category", 
+        "sub_category",
+        "product_name",
+        "price_per_product"
+    )
+    
+    # Save enriched tables
+    enriched_customers.write.mode("overwrite").parquet(f"{base_path}/enriched/enriched_customers.parquet")
+    enriched_products.write.mode("overwrite").parquet(f"{base_path}/enriched/enriched_products.parquet")
+
+
+
+def create_enriched_orders_table(spark, base_path):
+    """Create enriched table with order information, profit, customer details, and product details"""
+    print("Creating enriched orders table...")
+    from pyspark.sql.functions import round
+
+    # Load transformed data
+    orders_df = spark.read.parquet(f"{base_path}/orders_transformed.parquet")
+    customers_df = spark.read.parquet(f"{base_path}/customers_transformed.parquet")
+    products_df = spark.read.parquet(f"{base_path}/products_transformed.parquet")
+    
+    # Join orders with customers and products
+    enriched_orders = orders_df \
+        .join(customers_df, "customer_id", "left") \
+        .join(products_df, "product_id", "left") \
+        .select(
+            orders_df["order_id"],
+            orders_df["order_date"], 
+            orders_df["ship_date"],
+            orders_df["ship_mode"],
+            orders_df["customer_id"],
+            customers_df["customer_name"],
+            customers_df["country"],
+            orders_df["product_id"],
+            products_df["category"],
+            products_df["sub_category"], 
+            products_df["product_name"],
+            orders_df["quantity"],
+            orders_df["price"],
+            orders_df["discount"],
+            round(orders_df["profit"], 2).alias("profit")
+        )\
+        .withColumn("category", F.when((col("category").isNull()) | (col("category") == "") | (col("category") == "NULL"), "Unknown Category").otherwise(col("category")))\
+        .withColumn("sub_category", F.when((col("sub_category").isNull()) | (col("sub_category") == "") | (col("sub_category") == "NULL"), "Unknown Sub Category").otherwise(col("sub_category")))\
+        .withColumn("product_name", F.when((col("product_name").isNull()) | (col("product_name") == "") | (col("product_name") == "NULL"), "Unknown Product Name").otherwise(col("product_name")))\
+        .withColumn("customer_name", F.when((col("customer_name").isNull()) | (col("customer_name") == "") | (col("customer_name") == "NULL"), "Unknown Customer Name").otherwise(col("customer_name")))\
+        .withColumn("country", F.when((col("country").isNull()) | (col("country") == "") | (col("country") == "NULL"), "Unknown Country").otherwise(col("country")))
+    
+    # Save enriched orders table
+    enriched_orders.write.mode("overwrite").parquet(f"{base_path}/enriched/enriched_orders.parquet")

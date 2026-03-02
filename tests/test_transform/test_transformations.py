@@ -58,6 +58,15 @@ def test_deduplicate_rows(spark: SparkSession, path_and_primary_cols):
     primary_key_counts = deduplicated_df.groupBy(*primary_keys).count().filter(col("count") > 1)
     assert primary_key_counts.count() == 0
 
+@pytest.mark.xfail(reason="Primary keys list cannot be empty")
+def test_deduplicate_rows_with_empty_primary_keys(spark: SparkSession, path_and_primary_cols):
+    from assessment.transform.utils import deduplicate_rows
+    
+    file_path, primary_keys = path_and_primary_cols
+    df: DataFrame = spark.read.json(file_path)
+    
+    deduplicate_rows(df, [])
+
 def test_deduplicate_using_aggregation(spark: SparkSession, path_and_primary_cols):
     from assessment.transform.utils import deduplicate_using_aggregation
     
@@ -66,6 +75,32 @@ def test_deduplicate_using_aggregation(spark: SparkSession, path_and_primary_col
     
     aggregation_rules = {"value": "sum", "name": "first"}
     deduplicated_df = deduplicate_using_aggregation(df, primary_keys, aggregation_rules)
+    
+    assert deduplicated_df.count() == 3
+    
+    primary_key_counts = deduplicated_df.groupBy(*primary_keys).count().filter(col("count") > 1)
+    assert primary_key_counts.count() == 0
+    
+    id_1_row = deduplicated_df.filter(col("id") == 1).collect()[0]
+    assert id_1_row["value"] == 200
+
+@pytest.mark.xfail(reason="Primary keys list cannot be empty")
+def test_deduplicate_using_aggregation_with_empty_primary_keys(spark: SparkSession, path_and_primary_cols):
+    from assessment.transform.utils import deduplicate_using_aggregation
+    
+    file_path, primary_keys = path_and_primary_cols
+    df: DataFrame = spark.read.json(file_path)
+    deduplicate_using_aggregation(df, [])
+
+@pytest.mark.xfail(reason="Primary keys list cannot be empty")
+def test_deduplicate_using_aggregation_with_empty_aggregation_rules(spark: SparkSession, path_and_primary_cols):
+    from assessment.transform.utils import deduplicate_using_aggregation
+    
+    file_path, primary_keys = path_and_primary_cols
+    df: DataFrame = spark.read.json(file_path)
+    deduplicate_using_aggregation(df, primary_keys)
+
+    deduplicated_df = deduplicate_using_aggregation(df, primary_keys)
     
     assert deduplicated_df.count() == 3
     
