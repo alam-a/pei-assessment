@@ -3,14 +3,16 @@ from pyspark.sql.session import SparkSession
 from pyspark.sql.dataframe import DataFrame
 from pathlib import Path
 
+from assessment.config.request_config import RequestConfig
+
 from ..io.reader import read_csv, read_excel, read_json
 from ..transform.utils import flatten_json_df
+from ..io.writer import save_dataframe_as_table
 
-
-def load(spark: SparkSession, base_path: str):
-    products_path = f"{base_path}/Products.csv"
-    customers_path = f"{base_path}/Customer.xlsx"
-    orders_path = f"{base_path}/Orders.json"
+def load(spark: SparkSession, request_config: RequestConfig):
+    products_path = f"{request_config.input_location}/Products.csv"
+    customers_path = f"{request_config.input_location}/Customer.xlsx"
+    orders_path = f"{request_config.input_location}/Orders.json"
 
     products_df = normalize_column_names(read_csv(spark, products_path))
     products_df = strip_whitespace(products_df)
@@ -19,9 +21,9 @@ def load(spark: SparkSession, base_path: str):
     orders_df = normalize_column_names(flatten_json_df(read_json(spark, orders_path)))
     orders_df = strip_whitespace(orders_df)
 
-    products_df.write.mode("overwrite").parquet(f"{base_path}/outputs/products.parquet")
-    orders_df.write.mode("overwrite").parquet(f"{base_path}/outputs/orders.parquet")
-    customers_df.write.mode("overwrite").parquet(f"{base_path}/outputs/customers.parquet")
+    save_dataframe_as_table(products_df, f"{request_config.db}.product_extract")
+    save_dataframe_as_table(orders_df, f"{request_config.db}.order_extract")
+    save_dataframe_as_table(customers_df, f"{request_config.db}.customer_extract")
 
 def strip_whitespace(df: DataFrame) -> DataFrame:
     from pyspark.sql.functions import col, trim
@@ -31,8 +33,6 @@ def strip_whitespace(df: DataFrame) -> DataFrame:
 
 def normalize_column_names(df: DataFrame) -> DataFrame:
     from pyspark.sql.functions import col
-    from pyspark.sql.types import StringType
-
     import re
     def update_column(column: str) -> str:
         column = column.strip()

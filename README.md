@@ -8,7 +8,11 @@ uv sync
 
 To run the code, run this
 ```bash
-uv run main.py # or alternatively, python main.py if you have activated the virtual environment
+uv run main.py db=dummy_db input_location=/Volumes/data/sources/ 
+# replace dummy_db with the name of the database you want to use
+# replace /Volumes/data/sources/ with the path to your data sources
+
+# or alternatively, python main.py if you have activated the virtual environment
 ```
 
 To run the tests, use this

@@ -5,7 +5,7 @@ from assessment.transform.utils import deduplicate_rows, deduplicate_using_aggre
 from pyspark.sql.functions import col, round
 from assessment.transform.utils import convert_name_to_alphabetic_with_name_case, clean_phone_numbers
 
-def process(spark: SparkSession, base_path: str) -> DataFrame:
+def process(spark: SparkSession, base_path: str):
     logger = getLogger(__name__)
     logger.info("Transforming data...")
     orders_path = f"{base_path}/orders.parquet"

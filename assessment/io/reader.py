@@ -41,3 +41,7 @@ def read_csv(spark: SparkSession, path: Path, delimiter: str = ','):
     }   
     return spark.read\
         .options(**options).csv(path)
+
+def read_table(spark: SparkSession, table: str):
+    logger.info(msg = f"Reading table: {table}")
+    return spark.read.table(table)

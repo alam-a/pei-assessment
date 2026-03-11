@@ -1,8 +1,10 @@
+from unittest.mock import MagicMock, patch
 import pytest
 from pyspark.sql import SparkSession
 import pandas as pd
 import os
 from pathlib import Path
+from assessment.config.request_config import RequestConfig
 from assessment.io.reader import read_csv
 from assessment.extract.load_data_sources import normalize_column_names, load, flatten_json_df
 
@@ -41,14 +43,18 @@ def base_path(sample_data, tmp_path):
     
     return tmp_path
 
-def test_load(spark: SparkSession, base_path):
-    print(os.listdir(base_path))
-    assert not os.path.exists(base_path / 'outputs' / 'orders.parquet')
-    assert not os.path.exists(base_path / 'outputs' / 'products.parquet')
-    assert not os.path.exists(base_path / 'outputs' / 'customers.parquet')
+@pytest.fixture
+def request_config(base_path, test_db_name):
+    return MagicMock(input_location=base_path, db=test_db_name)
+
+def test_load(spark: SparkSession, request_config):
+    spark.catalog.setCurrentDatabase(request_config.db)
+    assert not spark.catalog.tableExists("product_extract")
+    assert not spark.catalog.tableExists("customer_extract")
+    assert not spark.catalog.tableExists("order_extract")
     
-    load(spark, base_path)
+    load(spark, request_config)
     
-    assert os.path.exists(base_path / 'outputs' / 'products.parquet')
-    assert os.path.exists(base_path / 'outputs' / 'customers.parquet')
-    assert os.path.exists(base_path / 'outputs' / 'orders.parquet')
+    assert spark.catalog.tableExists("product_extract")
+    assert spark.catalog.tableExists("customer_extract")
+    assert spark.catalog.tableExists("order_extract")
