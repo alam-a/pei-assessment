@@ -15,3 +15,10 @@ dependencies = [
     "ipykernel",
     "pip",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"

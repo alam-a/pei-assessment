@@ -4,6 +4,11 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+from enum import Enum
+class RunModes(Enum):
+    LOCAL_MODE = "local"
+    CLUSTER_MODE = "cluster"
+
 class RequestConfig:
     __REQUIRED_ARGS = {"DB", "INPUT_LOCATION"}
     
@@ -23,6 +28,7 @@ class RequestConfig:
         self.db = self._parsed_args["DB"]
         self.input_location = self._parsed_args["INPUT_LOCATION"]
         self.db_location = f"{self.input_location}/outputs/{self.db}.db"
+        self.run_mode = self._parse_run_mode(self._parsed_args.get("RUN_MODE", "CLUSTER").upper())
         
     def _parse_request(self) -> Dict[str, str]:
         parsed = {}
@@ -35,3 +41,8 @@ class RequestConfig:
             key, value = arg.split("=")
             parsed[key.strip().upper()] = value.strip()
         return parsed
+    
+    def _parse_run_mode(self, run_mode: str) -> RunModes:
+        if run_mode.upper() == "LOCAL":
+            return RunModes.LOCAL_MODE
+        return RunModes.CLUSTER_MODE

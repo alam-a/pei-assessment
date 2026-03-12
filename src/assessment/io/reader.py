@@ -24,8 +24,7 @@ def read_excel(spark: SparkSession, path: Path):
     logger.warning(msg = f"Reading Excel file from location: {path}")
     # In Production, we would do something like this, but this needed extra setup in local, so skipped for now
     # return spark.read.format("com.crealytics.spark.excel").option("header", "true").load(path)
-    pdf = pd.read_excel(path)
-    return spark.createDataFrame(pdf)
+    return pd.read_excel(path)
 
 def read_csv(spark: SparkSession, path: Path, delimiter: str = ','):
     logger.warning(msg = f"Reading CSV file from location: {path}") 

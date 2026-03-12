@@ -9,6 +9,7 @@ uv sync
 To run the code, run this
 ```bash
 uv run main.py db=dummy_db input_location=/Volumes/data/sources/ 
+uv run main.py db=test_pei input_location=/Users/alaf/dev/pei-assessment/src/data
 # replace dummy_db with the name of the database you want to use
 # replace /Volumes/data/sources/ with the path to your data sources
 

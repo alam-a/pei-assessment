@@ -15,11 +15,11 @@ def spark():
 
 @pytest.fixture
 def sample_data():
-    return [{"first_name": "Salman", "second_name": "Khan", "age": 55}]
+    return [{"first_name": "Salman", "second_name": "Khan", "age": 55, "phone": 987654321}]
 
 @pytest.fixture
 def sample_uncleaned_headers():
-    return [{"first Name": "Salman", "Second Name": "Khan", "age": 55}]
+    return [{"first Name": "Salman", "Second Name": "Khan", "age": 55, "phone": 987654321}]
 
 @pytest.fixture
 def sample_orders_data():

@@ -15,8 +15,13 @@ def process(spark: SparkSession, request_config: RequestConfig):
 
     products_df = normalize_column_names(read_csv(spark, products_path))
     products_df = strip_whitespace(products_df)
-    customers_df = normalize_column_names(read_excel(spark, customers_path))
+
+    customers_pdf = read_excel(spark, customers_path)
+    customers_pdf['phone'] = customers_pdf['phone'].astype(str)
+    customers_df = spark.createDataFrame(customers_pdf)
+    customers_df = normalize_column_names(customers_df)
     customers_df = strip_whitespace(customers_df)
+
     orders_df = normalize_column_names(flatten_json_df(read_json(spark, orders_path)))
     orders_df = strip_whitespace(orders_df)
 

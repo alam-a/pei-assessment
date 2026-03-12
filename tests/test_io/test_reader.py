@@ -51,7 +51,8 @@ def test_read_json_failure(spark: SparkSession, corrupted_json_path):
 
 
 def test_read_excel(spark: SparkSession, sample_excel_path):
-    df = read_excel(spark, sample_excel_path)
+    pdf = read_excel(spark, sample_excel_path)
+    df = spark.createDataFrame(pdf)
     assert df.count() == 1
     assert "first_name" in df.columns
     assert "second_name" in df.columns

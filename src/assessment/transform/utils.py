@@ -53,13 +53,13 @@ def deduplicate_using_aggregation(df: DataFrame, primary_keys: List[str], aggreg
     }
 
     # Get non-key columns
-    non_key_columns = [col for col in df.columns if col not in primary_keys]
+    non_key_columns = [column for column in df.columns if column not in primary_keys]
     aggregation_functions = {
         column: aggregation_function_mapping[aggregation_rules.get(column, "first")] for column in non_key_columns
     }
     
     # Build aggregation expressions - use first as default for primary keys - we can also let it fail here for unsupported aggregation functions
-    agg_cols = [aggregation_functions.get(column, first)(col(column)).alias(column) for column in non_key_columns]
+    agg_cols = [aggregation_functions.get(column, first)(F.col(column)).alias(column) for column in non_key_columns]
     
     # Group by primary keys and aggregate
     result_df = df.groupBy(*primary_keys).agg(*agg_cols)
