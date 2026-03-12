@@ -2,7 +2,7 @@ import pytest
 from pyspark.sql.session import SparkSession
 from unittest.mock import MagicMock
 
-def pytest_configure(config):
+def pytest_configure():
     import os
     os.environ['PYARROW_IGNORE_TIMEZONE'] = '1'
 
@@ -73,10 +73,13 @@ def test_spark_session_fixture(spark):
 
 @pytest.fixture(scope="session")
 def test_request_config(spark):
+    from assessment.config.run_modes import RunModes
+
     RequestConfig = MagicMock()
     from random import randint
     RequestConfig.db = f"test_db_{randint(1000, 9999)}_{randint(1000, 9999)}"
     RequestConfig.db_location = './temp'
+    RequestConfig.run_mode = RunModes.LOCAL_MODE
     spark.sql(f"CREATE DATABASE IF NOT EXISTS {RequestConfig.db} LOCATION '{RequestConfig.db_location}'")
     yield RequestConfig
     spark.sql(f"DROP DATABASE IF EXISTS {RequestConfig.db} CASCADE")

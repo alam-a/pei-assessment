@@ -1,6 +1,7 @@
 from pyspark.sql.session import SparkSession
 
-from assessment.config.request_config import RequestConfig, RunModes
+from assessment.config.request_config import RequestConfig
+from assessment.config.run_modes import RunModes
 
 def init_spark(request_config: RequestConfig):
     spark_builder = (

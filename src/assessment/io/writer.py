@@ -1,7 +1,9 @@
 from pyspark.sql.dataframe import DataFrame
 
 from assessment.io.reader import logger
-from assessment.config.request_config import RequestConfig, RunModes
+from assessment.config.request_config import RequestConfig
+from assessment.config.run_modes import RunModes
+
 
 def save_dataframe_as_table(df: DataFrame, table: str, request_config: RequestConfig):
     logger.info(f"Saving dataframe to table {table}")

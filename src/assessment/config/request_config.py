@@ -1,13 +1,9 @@
 import sys
 from typing import Dict, List, Optional
 import logging
+from assessment.config.run_modes import RunModes
 
 logger = logging.getLogger(__name__)
-
-from enum import Enum
-class RunModes(Enum):
-    LOCAL_MODE = "local"
-    CLUSTER_MODE = "cluster"
 
 class RequestConfig:
     __REQUIRED_ARGS = {"DB", "INPUT_LOCATION"}
