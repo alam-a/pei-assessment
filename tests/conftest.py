@@ -79,5 +79,4 @@ def test_request_config(spark):
     RequestConfig.db_location = './temp'
     spark.sql(f"CREATE DATABASE IF NOT EXISTS {RequestConfig.db} LOCATION '{RequestConfig.db_location}'")
     yield RequestConfig
-    print(f"Dropping database: {RequestConfig.db}")
     spark.sql(f"DROP DATABASE IF EXISTS {RequestConfig.db} CASCADE")

@@ -10,7 +10,7 @@ from assessment.io.writer import save_dataframe_as_table
 
 def process(spark: SparkSession, request_config: RequestConfig):
     logger = getLogger(__name__)
-    logger.info("Transforming data...")
+    logger.info("Module 2/3: Starting transforming data")
     output_tables = OutputTables(request_config.db)
 
     orders_df = spark.table(output_tables.ORDER_EXTRACTS)
@@ -42,6 +42,7 @@ def process(spark: SparkSession, request_config: RequestConfig):
     products_df = spark.table(output_tables.PRODUCT_TRANSFORMED)
     orders_df = spark.table(output_tables.ORDER_TRANSFORMED)
     
+    logger.info("Starting enriching process")
     # Create enriched tables
     from assessment.transform.utils import create_enriched_customers_products_table, create_enriched_orders, create_profit_aggregates
     enriched_customers, enriched_products = create_enriched_customers_products_table(

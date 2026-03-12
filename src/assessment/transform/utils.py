@@ -120,7 +120,6 @@ def create_enriched_customers_products_table(customers_df: DataFrame, products_d
 
 def create_enriched_orders(customers_df: DataFrame, orders_df: DataFrame, products_df: DataFrame):
     """Create enriched table with order information, profit, customer details, and product details"""
-    print("Creating enriched orders table...")
     from pyspark.sql.functions import round
 
     # Join orders with customers and products
@@ -153,7 +152,6 @@ def create_enriched_orders(customers_df: DataFrame, orders_df: DataFrame, produc
 
 def create_profit_aggregates(spark: SparkSession, enriched_orders_df: DataFrame) -> DataFrame:
     """Create aggregate table showing profit by Year, Product Category, Product Sub Category, Customer"""
-    print("Creating aggregate table...")
     
     # Create aggregate table with multiple dimensions
     aggregate_df = enriched_orders_df \

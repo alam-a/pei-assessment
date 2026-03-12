@@ -1,17 +1,17 @@
-from typing import List
+from typing import List, Optional
 from pyspark.sql import SparkSession
 from assessment.io.reader import logger
 from assessment.utils.log_utils import setup_logging_config
 from assessment.config.request_config import RequestConfig
 from assessment.config.initialize import init_database, init_spark
 
-def run(args: List[str] = None):
+def run(args: Optional[List[str]] = None):
     try:
         print("Setting up the process")
         setup_logging_config()
 
         logger.warning("Starting PEI Assessment Data Pipeline")
-        request_config = RequestConfig(None)
+        request_config = RequestConfig(args)
         logger.info(f"Database: {request_config.db}")
         logger.info(f"Input location: {request_config.input_location}")
         spark: SparkSession = init_spark(request_config)

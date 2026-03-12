@@ -4,9 +4,11 @@ from assessment.config.request_config import RequestConfig
 from assessment.config.output_tables import OutputTables
 from assessment.io.writer import save_dataframe_as_table
 from assessment.load.utils import calculate_profit_by_year, calculate_profit_by_year_category, calculate_profit_by_customer, calculate_profit_by_year_customer
+from assessment.io.reader import logger
 
 
 def process(spark: SparkSession, request_config: RequestConfig) -> None:
+    logger.info("Module 3/3: Starting load process")
     """Calculate and save aggregates to show in the dashboard"""
     output_tables = OutputTables(request_config.db)
     profit_aggregates = spark.table(output_tables.PROFIT_AGGREGATES).cache()

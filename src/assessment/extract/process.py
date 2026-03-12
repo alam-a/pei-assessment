@@ -4,11 +4,13 @@ from pyspark.sql.dataframe import DataFrame
 from assessment.config.output_tables import OutputTables
 from assessment.config.request_config import RequestConfig
 
-from ..io.reader import read_csv, read_excel, read_json
-from ..transform.utils import flatten_json_df
-from ..io.writer import save_dataframe_as_table
+from assessment.io.reader import read_csv, read_excel, read_json
+from assessment.transform.utils import flatten_json_df
+from assessment.io.writer import save_dataframe_as_table
+from assessment.io.reader import logger
 
 def process(spark: SparkSession, request_config: RequestConfig):
+    logger.info("Module 1/3: Starting Extracts processing")
     products_path = f"{request_config.input_location}/Products.csv"
     customers_path = f"{request_config.input_location}/Customer.xlsx"
     orders_path = f"{request_config.input_location}/Orders.json"
