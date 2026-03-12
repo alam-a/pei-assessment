@@ -1,15 +1,14 @@
-from pyspark.sql import Column
 from pyspark.sql.session import SparkSession
 from pyspark.sql.dataframe import DataFrame
-from pathlib import Path
 
+from assessment.config.output_tables import OutputTables
 from assessment.config.request_config import RequestConfig
 
 from ..io.reader import read_csv, read_excel, read_json
 from ..transform.utils import flatten_json_df
 from ..io.writer import save_dataframe_as_table
 
-def load(spark: SparkSession, request_config: RequestConfig):
+def process(spark: SparkSession, request_config: RequestConfig):
     products_path = f"{request_config.input_location}/Products.csv"
     customers_path = f"{request_config.input_location}/Customer.xlsx"
     orders_path = f"{request_config.input_location}/Orders.json"
@@ -21,9 +20,10 @@ def load(spark: SparkSession, request_config: RequestConfig):
     orders_df = normalize_column_names(flatten_json_df(read_json(spark, orders_path)))
     orders_df = strip_whitespace(orders_df)
 
-    save_dataframe_as_table(products_df, f"{request_config.db}.product_extract")
-    save_dataframe_as_table(orders_df, f"{request_config.db}.order_extract")
-    save_dataframe_as_table(customers_df, f"{request_config.db}.customer_extract")
+    output_tables = OutputTables(request_config.db)
+    save_dataframe_as_table(products_df, output_tables.PRODUCT_EXTRACTS, request_config)
+    save_dataframe_as_table(orders_df, output_tables.ORDER_EXTRACTS, request_config)
+    save_dataframe_as_table(customers_df, output_tables.CUSTOMER_EXTRACTS, request_config)
 
 def strip_whitespace(df: DataFrame) -> DataFrame:
     from pyspark.sql.functions import col, trim

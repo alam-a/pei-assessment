@@ -1,5 +1,6 @@
 import pytest
 from pyspark.sql.session import SparkSession
+from unittest.mock import MagicMock
 
 def pytest_configure(config):
     import os
@@ -7,7 +8,10 @@ def pytest_configure(config):
 
 @pytest.fixture(scope='session')
 def spark():
-    return SparkSession.builder.appName("pei assesment").getOrCreate()
+    return (
+        SparkSession.builder.appName("pei assesment")
+        .getOrCreate()
+    )
 
 @pytest.fixture
 def sample_data():
@@ -68,10 +72,12 @@ def test_spark_session_fixture(spark):
     assert spark.range(100).count == 100
 
 @pytest.fixture(scope="session")
-def test_db_name(spark):
+def test_request_config(spark):
+    RequestConfig = MagicMock()
     from random import randint
-    # using random numbers to try to make sure we are not using any existing db
-    db_name = f"test_db_{randint(1000, 9999)}_{randint(1000, 9999)}"
-    spark.sql(f"CREATE DATABASE IF NOT EXISTS {db_name}")
-    yield db_name
-    spark.sql(f"DROP DATABASE IF EXISTS {db_name} CASCADE")
+    RequestConfig.db = f"test_db_{randint(1000, 9999)}_{randint(1000, 9999)}"
+    RequestConfig.db_location = './temp'
+    spark.sql(f"CREATE DATABASE IF NOT EXISTS {RequestConfig.db} LOCATION '{RequestConfig.db_location}'")
+    yield RequestConfig
+    print(f"Dropping database: {RequestConfig.db}")
+    spark.sql(f"DROP DATABASE IF EXISTS {RequestConfig.db} CASCADE")

@@ -4,9 +4,10 @@ from pyspark.sql import SparkSession
 import pandas as pd
 import os
 from pathlib import Path
+from assessment.config.output_tables import OutputTables
 from assessment.config.request_config import RequestConfig
 from assessment.io.reader import read_csv
-from assessment.extract.load_data_sources import normalize_column_names, load, flatten_json_df
+from assessment.extract.process import normalize_column_names, process
 
 CSV_FILE_NAME = 'Products.csv'
 EXCEL_FILE_NAME = 'Customer.xlsx'
@@ -43,18 +44,16 @@ def base_path(sample_data, tmp_path):
     
     return tmp_path
 
-@pytest.fixture
-def request_config(base_path, test_db_name):
-    return MagicMock(input_location=base_path, db=test_db_name)
+def test_process(spark: SparkSession, test_request_config, base_path):
+    test_request_config.input_location = base_path
+    output_tables = OutputTables(test_request_config.db)
 
-def test_load(spark: SparkSession, request_config):
-    spark.catalog.setCurrentDatabase(request_config.db)
-    assert not spark.catalog.tableExists("product_extract")
-    assert not spark.catalog.tableExists("customer_extract")
-    assert not spark.catalog.tableExists("order_extract")
+    assert not spark.catalog.tableExists(output_tables.PRODUCT_EXTRACTS)
+    assert not spark.catalog.tableExists(output_tables.CUSTOMER_EXTRACTS)
+    assert not spark.catalog.tableExists(output_tables.ORDER_EXTRACTS)
     
-    load(spark, request_config)
+    process(spark, test_request_config)
     
-    assert spark.catalog.tableExists("product_extract")
-    assert spark.catalog.tableExists("customer_extract")
-    assert spark.catalog.tableExists("order_extract")
+    assert spark.catalog.tableExists(output_tables.PRODUCT_EXTRACTS)
+    assert spark.catalog.tableExists(output_tables.CUSTOMER_EXTRACTS)
+    assert spark.catalog.tableExists(output_tables.ORDER_EXTRACTS)

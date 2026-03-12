@@ -22,6 +22,7 @@ class RequestConfig:
     def _set_attributes(self) -> None:
         self.db = self._parsed_args["DB"]
         self.input_location = self._parsed_args["INPUT_LOCATION"]
+        self.db_location = f"{self.input_location}/outputs/{self.db}.db"
         
     def _parse_request(self) -> Dict[str, str]:
         parsed = {}

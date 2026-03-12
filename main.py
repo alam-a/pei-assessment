@@ -11,7 +11,7 @@ def main():
     logger.info(f"Input location: {RequestConfig().input_location}")
 
     request_config = RequestConfig()
-    spark = init_spark()
+    spark = init_spark(request_config)
     init_database(spark, request_config)
     run_pipeline(spark, request_config)
 

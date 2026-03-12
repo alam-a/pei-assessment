@@ -6,6 +6,11 @@ from pyspark.sql import DataFrame
 from pyspark.sql.window import Window
 from typing import List, Optional, Dict, Any
 
+from assessment.config import output_tables
+from assessment.config.output_tables import OutputTables
+from assessment.config.request_config import RequestConfig
+from assessment.io.writer import save_dataframe_as_table
+
 def clean_phone_numbers(column: Column) -> Column:
     return regexp_replace(column, "[^0-9]", "")
 
@@ -80,7 +85,6 @@ def flatten_json_df(df: DataFrame) -> DataFrame:
     while change_needed:
         change_needed = False
         for col in df.schema.fields:
-            print(col.name, col.dataType)
             if isinstance(col.dataType, ArrayType):
                 df = df.withColumn(col.name, F.explode(col.name))
                 change_needed = True
@@ -92,10 +96,7 @@ def flatten_json_df(df: DataFrame) -> DataFrame:
     return df
 
 
-def create_enriched_customers_products_table(spark, base_path):
-    # Load transformed data
-    customers_df: DataFrame = spark.read.parquet(f"{base_path}/customers_transformed.parquet")
-    products_df: DataFrame = spark.read.parquet(f"{base_path}/products_transformed.parquet")
+def create_enriched_customers_products_table(customers_df: DataFrame, products_df: DataFrame):
     
     # Create enriched customers table
     enriched_customers = customers_df.select(
@@ -114,22 +115,14 @@ def create_enriched_customers_products_table(spark, base_path):
         "price_per_product"
     )
     
-    # Save enriched tables
-    enriched_customers.write.mode("overwrite").parquet(f"{base_path}/enriched/enriched_customers.parquet")
-    enriched_products.write.mode("overwrite").parquet(f"{base_path}/enriched/enriched_products.parquet")
+    return enriched_customers, enriched_products
 
 
-
-def create_enriched_orders_table(spark, base_path):
+def create_enriched_orders(customers_df: DataFrame, orders_df: DataFrame, products_df: DataFrame):
     """Create enriched table with order information, profit, customer details, and product details"""
     print("Creating enriched orders table...")
     from pyspark.sql.functions import round
 
-    # Load transformed data
-    orders_df = spark.read.parquet(f"{base_path}/orders_transformed.parquet")
-    customers_df = spark.read.parquet(f"{base_path}/customers_transformed.parquet")
-    products_df = spark.read.parquet(f"{base_path}/products_transformed.parquet")
-    
     # Join orders with customers and products
     enriched_orders = orders_df \
         .join(customers_df, "customer_id", "left") \
@@ -156,6 +149,16 @@ def create_enriched_orders_table(spark, base_path):
         .withColumn("product_name", F.when((col("product_name").isNull()) | (col("product_name") == "") | (col("product_name") == "NULL"), "Unknown Product Name").otherwise(col("product_name")))\
         .withColumn("customer_name", F.when((col("customer_name").isNull()) | (col("customer_name") == "") | (col("customer_name") == "NULL"), "Unknown Customer Name").otherwise(col("customer_name")))\
         .withColumn("country", F.when((col("country").isNull()) | (col("country") == "") | (col("country") == "NULL"), "Unknown Country").otherwise(col("country")))
+    return enriched_orders
+
+def create_profit_aggregates(spark: SparkSession, enriched_orders_df: DataFrame) -> DataFrame:
+    """Create aggregate table showing profit by Year, Product Category, Product Sub Category, Customer"""
+    print("Creating aggregate table...")
     
-    # Save enriched orders table
-    enriched_orders.write.mode("overwrite").parquet(f"{base_path}/enriched/enriched_orders.parquet")
+    # Create aggregate table with multiple dimensions
+    aggregate_df = enriched_orders_df \
+        .withColumn("year", F.year(col("order_date"))) \
+        .groupBy("year", "category", "sub_category", "customer_id", "customer_name") \
+        .agg(F.round(F.sum("profit"), 2).alias("total_profit"))
+        
+    return aggregate_df

@@ -184,3 +184,5 @@ cython_debug/
 
 *.log
 spark-warehouse/*
+
+*.db/
